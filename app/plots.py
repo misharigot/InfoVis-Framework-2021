@@ -90,7 +90,7 @@ y_extra_info=data.label_extra_ordered, div_name="myplot"):
 	all_sliders = [part_rent_slider, corp_rent_slider, high_rent_slider,middle_rent_slider, low_rent_slider, 
 	living_space_100, living_space_80100, living_space_6080, living_space_4060, living_space_040]
 
-	callback = CustomJS(args=dict(source=all_data), code="""
+	callback = CustomJS(args=dict(source=all_data, area_name=area_name), code="""
 		var data = source.data;
 		var values = data["values"];
 
@@ -99,8 +99,6 @@ y_extra_info=data.label_extra_ordered, div_name="myplot"):
 
         var variable;
 		var value_idx;
-
-		// updatePlot(value, var_text);
 
 		socket.emit('plot_update', {newValue: value, definition: var_text});
 
@@ -115,7 +113,7 @@ y_extra_info=data.label_extra_ordered, div_name="myplot"):
 			source.change.emit();
 
 			window.onmouseup = function() {
-				updateModel(value, variable);
+				socket.emit('model_update', {newValue: value, variable: variable, area: area_name});
 			}
         });
 	""")
