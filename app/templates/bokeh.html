@@ -10,35 +10,35 @@
 
 <form action="/bokeh">
 
-<p clas=="lead">I am looking for a rental place with the following properties:</p>
-<select name="property_type">
-	{% for property_type in all_property_types %}
-		{% if property_type == selected_property_type %}
-			<option selected value="{{ property_type }}">{{all_property_types_text[loop.index - 1]}}</option> 
-		{% else %} 
-			<option value="{{ property_type }}">{{all_property_types_text[loop.index - 1]}}</option> 
-		{% endif %}
-	{% endfor %}
-</select>
-<select name="rental_price">
-	{% for rental_price in all_rental_prices %}
-		{% if rental_price == selected_rental_price %}
-			<option selected value="{{ rental_price }}">{{all_rental_prices_text[loop.index - 1]}}</option> 
-		{% else %} 
-			<option value="{{ rental_price }}">{{all_rental_prices_text[loop.index - 1]}}</option> 
-		{% endif %}
-	{% endfor %}
-</select>
-<select name="surface_area">
-	{% for surface_area in all_surface_areas %}
-		{% if surface_area == selected_surface_area %}
-			<option selected value="{{ surface_area }}">{{all_surface_areas_text[loop.index - 1]}}</option> 
-		{% else %} 
-			<option value="{{ surface_area }}">{{all_surface_areas_text[loop.index - 1]}}</option> 
-		{% endif %}
-	{% endfor %}
-</select>
-<button class="btn btn-light" type="submit">Submit Query</button>
+	<p class="lead">I am looking for a rental place with the following properties:</p>
+	<select name="property_type">
+		{% for property_type in data.all_property_types %}
+			{% if property_type == queryParams.property_type %}
+				<option selected value="{{ property_type }}">{{data.all_property_types_text[loop.index - 1]}}</option> 
+			{% else %} 
+				<option value="{{ property_type }}">{{data.all_property_types_text[loop.index - 1]}}</option> 
+			{% endif %}
+		{% endfor %}
+	</select>
+	<select name="rental_price">
+		{% for rental_price in data.all_rental_prices %}
+			{% if rental_price == queryParams.rental_price %}
+				<option selected value="{{ rental_price }}">{{data.all_rental_prices_text[loop.index - 1]}}</option> 
+			{% else %} 
+				<option value="{{ rental_price }}">{{data.all_rental_prices_text[loop.index - 1]}}</option> 
+			{% endif %}
+		{% endfor %}
+	</select>
+	<select name="surface_area">
+		{% for surface_area in data.all_surface_areas %}
+			{% if surface_area == queryParams.surface_area %}
+				<option selected value="{{ surface_area }}">{{data.all_surface_areas_text[loop.index - 1]}}</option> 
+			{% else %} 
+				<option value="{{ surface_area }}">{{data.all_surface_areas_text[loop.index - 1]}}</option> 
+			{% endif %}
+		{% endfor %}
+	</select>
+	<button class="btn btn-light" type="submit">Submit Query</button>
 </form>
 
 
@@ -56,18 +56,20 @@
     });
 
 	
-	var property_type = {{ selected_property_type | tojson }};
-	var surface_area = {{ selected_surface_area | tojson }};
-	var rental_price = {{ selected_rental_price | tojson }};
+	var property_type = {{ queryParams.property_type | tojson }};
+	var surface_area = {{ queryParams.surface_area | tojson }};
+	var rental_price = {{ queryParams.rental_price | tojson }};
 
 	var area;
 	var area_proba;
 
 	var fetch_url = '/data?property=' + property_type + '&surface=' + surface_area + 
 	'&price=' + rental_price + '&plot=1';
+
 	fetch(fetch_url)
 		.then(function(response) { return response.json(); })
 		.then((data) => {
+			console.log(data)
 			area = data.prediction;
 			area_proba = data.prediction_proba;
 			var htmlText = 'We recommend you to look for a rental place in <b>' + area + 
@@ -81,7 +83,7 @@
 
 			//g.textContent = 
 			Bokeh.embed.embed_item(data.plotData);
-	});
+		});
 
 	function updatePlot(value, varDef) {
 		console.log('Sending new data...');

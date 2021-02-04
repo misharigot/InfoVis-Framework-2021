@@ -1,12 +1,12 @@
-from flask import render_template, request, jsonify
-import os, json
-
+import json
+import os
 from decimal import Decimal
 
-import pandas as pd
 import numpy as np
+import pandas as pd
+from app import data, models, plots
+from flask import jsonify, render_template, request
 
-from app import models, plots, data
 from . import main
 
 
@@ -17,78 +17,99 @@ def index():
 
 @main.route('/bokeh', methods = ['GET', 'POST'])
 def bokeh():
-	property_type = request.args.get("property_type")
-	rental_price = request.args.get("rental_price")
-	surface_area = request.args.get("surface_area")
+	# Query params in URL
+	queryParams = {}
+	queryParams["property_type"] = request.args.get("property_type") or 'WCORHUUR_P'
+	queryParams["rental_price"] = request.args.get("rental_price") or 'WHUURTSLG_P'
+	queryParams["surface_area"] = request.args.get("surface_area") or 'WOPP0040_P'
 
-	if property_type is None:
-		property_type = 'WCORHUUR_P'
-		rental_price = 'WHUURTSLG_P'
-		surface_area = 'WOPP0040_P'
-
-	return render_template("bokeh.html",
-		all_property_types=data.all_property_types, all_property_types_text=data.all_property_types_text,
-		all_rental_prices=data.all_rental_prices, all_rental_prices_text=data.all_rental_prices_text,
-		all_surface_areas=data.all_surface_areas, all_surface_areas_text=data.all_surface_areas_text,
-		selected_property_type=property_type, selected_rental_price=rental_price, selected_surface_area=surface_area)
+	return render_template("bokeh.html", queryParams=queryParams, data=data)
 
 
 @main.route("/data", methods=['GET'])
 def get_data():
-	area = request.args.get("area")
-	
-	property_type = request.args.get("property")
-	rental_price = request.args.get("price")
-	surface_area = request.args.get("surface")
-	plot = request.args.get("plot")
+	"""Returns some JSON.
+	Example:
+	{
+		area_changed_proba: null
+		plotData: {doc: {…}, root_id: "1537", target_id: "myplot"}
+		prediction: "Noord-Oost"
+		prediction_proba: "0.145"	
+	}
+	"""
+	# Query params in URL
+	queryParams = {}
+	queryParams["area"] = request.args.get("area")
+	queryParams["property_type"] = request.args.get("property")
+	queryParams["rental_price"] = request.args.get("price")
+	queryParams["surface_area"] = request.args.get("surface")
+	queryParams["plot"] = request.args.get("plot")
 
-	query_input = []
-	for idx, var in enumerate([surface_area, rental_price, property_type]):
-		vars_query_input = [0] * len(data.all_var_types[idx])
-		idx_query_var = data.all_var_types[idx].index(var)
-		vars_query_input[idx_query_var] = 100
-		query_input.extend(vars_query_input)
+	def to_model_input_vars(surface_area, rental_price, property_type):
+		query_input = []
+		for index, var in enumerate([
+			queryParams["surface_area"], queryParams["rental_price"], queryParams["property_type"]
+		]):
+			vars_query_input = [0] * len(data.all_var_types[index])
+			idx_query_var = data.all_var_types[index].index(var)
+			vars_query_input[idx_query_var] = 100
+			query_input.extend(vars_query_input)
 
-	#reshape query_input to correct format for input to our model
-	query_input = np.array(query_input).reshape(1, -1)
+		# reshape query_input to correct format for input to our model
+		model_input_vars = np.array(query_input).reshape(1, -1)
+		return model_input_vars
 
-	#retrain model based on new data
+	model_input_vars = to_model_input_vars(
+		queryParams["surface_area"], 
+		queryParams["rental_price"], 
+		queryParams["property_type"]
+	)
+
+	# retrain model based on new data
 	trained_model = models.train_model(data.model_data, data.area_names, data.model_vars)
 
-	#have our trained model make a prediction based on our query input
-	_, probabilities = models.pred_proba(model=trained_model, input_vars=query_input)
-	proba_idx = np.where(probabilities[0] == np.amax(probabilities[0]))
-	proba_idx = proba_idx[0][0]
+	# have our trained model make a prediction based on our query input
+	_, probabilities = models.pred_proba(model=trained_model, input_vars=model_input_vars)
+	pred_area_index = np.where(probabilities[0] == np.amax(probabilities[0]))
+	pred_area_index = pred_area_index[0][0]
 	
-	#determine the index of the predicted area within the returned probabiblities array
-	pred_area = data.area_names[proba_idx]
-	proba = probabilities[0][proba_idx]
-	proba = '%.3f' % Decimal(proba)
+	# determine the index of the predicted area within the returned probabilities array
+	predicted_area = data.area_names[pred_area_index]
+	area_prob = probabilities[0][pred_area_index]
+	area_prob = '%.3f' % Decimal(area_prob)
 
-	#determine how the prediction probability of our previously predicted area has changed 
-	#due to the change in data variables of this area
-	if area is not None:
-		proba_idx = data.area_names.index(area)
-		new_proba_prev_area = probabilities[0][proba_idx]
+	# determine how the prediction probability of our previously predicted area has changed 
+	# due to the change in data variables of this area
+	if queryParams["area"] is not None:
+		pred_area_index = data.area_names.index(queryParams["area"])
+		new_proba_prev_area = probabilities[0][pred_area_index]
 		new_proba_prev_area = '%.3f' % Decimal(new_proba_prev_area)
-		plot_area = area
+		area_name = queryParams["area"]
 	else:
 		new_proba_prev_area = None
-		plot_area = pred_area
+		area_name = predicted_area
 
 	del probabilities
 		
-	if plot is not None:
-		plot_data = data.model_data.loc[data.model_data['area_name'] == plot_area]
+	if queryParams["plot"] is not None:
+		plot_data = data.model_data.loc[data.model_data['area_name'] == area_name]
 		plot_data = plot_data.loc[:, data.model_vars]
-		plot = plots.create_hbar(plot_area, plot_data)
-		return jsonify(prediction=pred_area, prediction_proba=proba, 
-				area_changed_proba=new_proba_prev_area, plotData=plot)
+		queryParams["plot"] = plots.create_hbar(area_name, plot_data)
+		print("pred_area", predicted_area)
+		print("area_prob", area_prob)
+		print("new_proba_prev_area", new_proba_prev_area)
+		return jsonify(
+			prediction=predicted_area, 
+			prediction_proba=area_prob, 
+			area_changed_proba=new_proba_prev_area, 
+			plotData=queryParams["plot"]
+		)
 	else:
-		return jsonify(prediction=pred_area, prediction_proba=proba, 
-				area_changed_proba=new_proba_prev_area)
-
-	
+		return jsonify(
+			prediction=predicted_area, 
+			prediction_proba=area_prob, 
+			area_changed_proba=new_proba_prev_area
+		)
 
 
 @main.route('/d3', methods = ['GET'])
@@ -116,7 +137,3 @@ def d3_plot_data():
 	plot_data = plot_data.to_json(orient='records')
 
 	return plot_data
-
-
-
-

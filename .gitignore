@@ -4,3 +4,5 @@ app/.DS_Store
 app/static/.DS_Store
 app/templates/.DS_Store
 app/__pycache__
+.vscode
+venv
