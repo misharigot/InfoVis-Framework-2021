@@ -99,7 +99,11 @@ y_extra_info=data.label_extra_ordered, div_name="myplot"):
 
         var variable;
 		var value_idx;
-		updatePlot(value, var_text);
+
+		// updatePlot(value, var_text);
+
+		socket.emit('plot_update', {newValue: value, definition: var_text});
+
         socket.on('plot_update', function(msg) {
             value = msg.new_value;
             variable = msg.variable;

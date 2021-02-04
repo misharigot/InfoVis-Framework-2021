@@ -87,10 +87,11 @@
 			Bokeh.embed.embed_item(data.plotData);
 		});
 
+	/*
 	function updatePlot(value, varDef) {
 		console.log('Sending new data...');
 		socket.emit('plot_update', {newValue: value, definition: varDef});
-	}
+	}*/
 
 	function updateModel(value, variable) {
 		socket.emit('model_update', {newValue: value, variable: variable, area: area});
