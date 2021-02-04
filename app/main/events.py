@@ -3,15 +3,15 @@ from .. import socketio
 from .. import models, data
 
 
-@socketio.on('plot_update')
-def handle_plot_update(info):
+@socketio.on('slider_changed')
+def handle_slider_changed(info):
     """Updating plot due to change in data"""
     print("Emitting plot update")
     new_value = info['newValue']
     var_definition = info['definition']
     var_idx = data.model_vars_text.index(var_definition)
     var = data.model_vars[var_idx]
-    emit('plot_update', {'variable': var, 'new_value': new_value, 'index': var_idx})
+    emit('data_updated', {'variable': var, 'new_value': new_value, 'index': var_idx})
 
 @socketio.on("model_update")
 def handle_model_update(info):
