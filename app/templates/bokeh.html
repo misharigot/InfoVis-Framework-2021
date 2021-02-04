@@ -42,9 +42,10 @@
 </form>
 
 
-<div class="mt-3" id="prediction-container"></div>
+<div class="mt-3" id="prediction-container" style="height: 120px;"></div>
 
 
+<div id="probabilities-plot"></div>
 <div id="myplot"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.7.3/socket.io.min.js"></script>
@@ -63,10 +64,10 @@
 	var area;
 	var area_proba;
 
-	var fetch_url = '/data?property=' + property_type + '&surface=' + surface_area + 
+	var data_url = '/data?property=' + property_type + '&surface=' + surface_area + 
 	'&price=' + rental_price + '&plot=1';
 
-	fetch(fetch_url)
+	fetch(data_url)
 		.then(function(response) { return response.json(); })
 		.then((data) => {
 			console.log(data)
@@ -82,6 +83,7 @@
 				.html(htmlText);
 
 			//g.textContent = 
+			Bokeh.embed.embed_item(data.probabilities_plot);
 			Bokeh.embed.embed_item(data.plotData);
 		});
 
@@ -98,9 +100,9 @@
 		d3.select("#predictionText")
 			.remove();
 
-		var fetch_url = '/data?property=' + property_type + '&surface=' + surface_area + 
+		var data_url = '/data?property=' + property_type + '&surface=' + surface_area + 
 		'&price=' + rental_price + '&area=' + area;
-		fetch(fetch_url)
+		fetch(data_url)
 			.then(function(response) { return response.json(); })
 			.then((data) => {
 				d3.select("#predictionText")

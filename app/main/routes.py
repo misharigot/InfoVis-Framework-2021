@@ -89,27 +89,29 @@ def get_data():
 		new_proba_prev_area = None
 		area_name = predicted_area
 
-	del probabilities
-		
-	if queryParams["plot"] is not None:
-		plot_data = data.model_data.loc[data.model_data['area_name'] == area_name]
-		plot_data = plot_data.loc[:, data.model_vars]
-		queryParams["plot"] = plots.create_hbar(area_name, plot_data)
-		print("pred_area", predicted_area)
-		print("area_prob", area_prob)
-		print("new_proba_prev_area", new_proba_prev_area)
-		return jsonify(
-			prediction=predicted_area, 
-			prediction_proba=area_prob, 
-			area_changed_proba=new_proba_prev_area, 
-			plotData=queryParams["plot"]
-		)
-	else:
-		return jsonify(
-			prediction=predicted_area, 
-			prediction_proba=area_prob, 
-			area_changed_proba=new_proba_prev_area
-		)
+	probabilities_plot = plots.get_probabilities_plot(probabilities)
+	
+	try:	
+		if queryParams["plot"] is not None:
+			plot_data = data.model_data.loc[data.model_data['area_name'] == area_name]
+			plot_data = plot_data.loc[:, data.model_vars]
+			queryParams["plot"] = plots.create_hbar(area_name, plot_data)
+			return jsonify(
+				prediction=predicted_area, 
+				prediction_proba=area_prob, 
+				area_changed_proba=new_proba_prev_area, 
+				plotData=queryParams["plot"],
+				probabilities_plot=probabilities_plot
+			)
+		else:
+			return jsonify(
+				prediction=predicted_area, 
+				prediction_proba=area_prob, 
+				area_changed_proba=new_proba_prev_area,
+				probabilities_plot=probabilities_plot
+			)
+	finally:
+		del probabilities
 
 
 @main.route('/d3', methods = ['GET'])

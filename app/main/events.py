@@ -4,7 +4,7 @@ from .. import models, data
 
 
 @socketio.on('plot_update')
-def on_plot_update(info):
+def handle_plot_update(info):
     """Updating plot due to change in data"""
     print("Emitting plot update")
     new_value = info['newValue']
@@ -14,7 +14,7 @@ def on_plot_update(info):
     emit('plot_update', {'variable': var, 'new_value': new_value, 'index': var_idx})
 
 @socketio.on("model_update")
-def on_model_update(info):
+def handle_model_update(info):
     """Updating model due to change in data"""
     print("Emitting model update")
     new_value = info['newValue']

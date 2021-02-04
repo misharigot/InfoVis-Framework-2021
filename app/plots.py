@@ -1,8 +1,43 @@
-from bokeh.plotting import figure, ColumnDataSource
-from bokeh.layouts import row, column, widgetbox
-from bokeh.models import HoverTool, Slider, CustomJS
+from typing import List
+
 from bokeh.embed import json_item
+from bokeh.layouts import column, row, widgetbox
+from bokeh.models import CustomJS, HoverTool, Slider
+from bokeh.plotting import ColumnDataSource, figure
+
 from . import data
+
+
+def get_probabilities_plot(probabilities: List[List[float]]):
+	probabilities = probabilities[0]
+	div_name = "probabilities-plot"
+	area_names = data.model_data['area_name']
+	
+	source = ColumnDataSource({"area_names": area_names, "probabilities": probabilities })
+	p = figure(
+		x_range=area_names, 
+		plot_height=500,
+		plot_width=1000,
+		toolbar_location=None, 
+		title="Predicted probabilities per area"
+	)
+	p.vbar(
+		x='area_names',
+		top='probabilities', 
+		width=.8, source=source, legend_field="area_names",
+		line_color='white')
+
+	p.xgrid.grid_line_color = None
+	p.y_range.start = 0
+	p.y_range.end = max(probabilities)
+	p.legend.orientation = "vertical"
+	p.legend.location = "top_center"
+	p.xaxis.major_label_orientation = "vertical"
+
+	plot_json = json_item(p, div_name)
+
+	return plot_json
+
 
 def create_hbar(area_name: str, plot_data, y_variables=data.model_vars, y_definition=data.label_def_ordered, 
 y_extra_info=data.label_extra_ordered, div_name="myplot"):
