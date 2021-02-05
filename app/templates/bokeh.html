@@ -44,8 +44,9 @@
 
 <div class="mt-3" id="prediction-container" style="height: 120px;"></div>
 
-
-<div id="probabilities-plot"></div>
+<div id="probabilities-plot-container">
+	<div id="probabilities-plot"></div>
+</div>
 <div id="myplot"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.7.3/socket.io.min.js"></script>
@@ -88,37 +89,52 @@
 		});
 
 	socket.on("model_updated", function() {
-		d3.select("#predictionText")
-			.remove();
+		d3.select("#predictionText").remove();
 
 		var data_url = '/data?property=' + property_type + '&surface=' + surface_area + 
 		'&price=' + rental_price + '&area=' + area;
 		fetch(data_url)
 			.then(function(response) { return response.json(); })
 			.then((data) => {
-				d3.select("#predictionText")
-					.remove();
-
-				d3.select('body')
-				var htmlText = 'We previously recommended you to look for an area in <b>' + area + '</b> with a prediction probability of <b>' + area_proba +
-				'</b>. Due to the change in data variables, the prediction probability for this area has changed to <b>' + data.area_changed_proba + '</b>. ' 
-				area_proba = data.area_changed_proba;
-				
-				var newPredArea = data.prediction;
-				if (area != newPredArea) {
-					htmlText = htmlText + 'As a result we now recommend you to look for a place in <b>' + newPredArea + '</b> with a prediction probability of <b>' + 
-					data.prediction_proba + '</b>.'
-				} else {
-					htmlText = htmlText + 'We still recommend you to look for a place in this area.'
-				};
-
-				d3.select("#prediction-container")
-					.append("p")
-					.attr("id", "predictionText")
-					.attr('class', "txt")
-					.html(htmlText);
-		});
+				updatePredictionText(area, area_proba, data)
+				updateProbabilitiesPlot(data)
+			});
 	})
+	
+	function updateProbabilitiesPlot(data) {
+		console.log("Called updated probabilities plot")
+		var div_id = "probabilities-plot"
+		d3.select(`#${div_id}`).remove();
+		d3.select('body')
+		d3.select(`#${div_id}-container`)
+			.append("div")
+			.attr("id", div_id);
+		Bokeh.embed.embed_item(data.probabilities_plot);
+		return null
+	}
+
+	function updatePredictionText(area, area_proba, data) {
+		d3.select("#predictionText").remove();
+
+		d3.select('body')
+		var htmlText = 'We previously recommended you to look for an area in <b>' + area + '</b> with a prediction probability of <b>' + area_proba +
+		'</b>. Due to the change in data variables, the prediction probability for this area has changed to <b>' + data.area_changed_proba + '</b>. ' 
+		area_proba = data.area_changed_proba;
+		
+		var newPredArea = data.prediction;
+		if (area != newPredArea) {
+			htmlText = htmlText + 'As a result we now recommend you to look for a place in <b>' + newPredArea + '</b> with a prediction probability of <b>' + 
+			data.prediction_proba + '</b>.'
+		} else {
+			htmlText = htmlText + 'We still recommend you to look for a place in this area.'
+		};
+
+		d3.select("#prediction-container")
+			.append("p")
+			.attr("id", "predictionText")
+			.attr('class', "txt")
+			.html(htmlText);
+	}
 	
   </script>
 
