@@ -87,7 +87,7 @@
 			Bokeh.embed.embed_item(data.plotData);
 		});
 
-	socket.on("model_update", function() {
+	socket.on("model_updated", function() {
 		d3.select("#predictionText")
 			.remove();
 

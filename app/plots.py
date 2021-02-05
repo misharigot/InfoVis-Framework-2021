@@ -91,31 +91,31 @@ y_extra_info=data.label_extra_ordered, div_name="myplot"):
 	living_space_100, living_space_80100, living_space_6080, living_space_4060, living_space_040]
 
 	callback = CustomJS(args=dict(source=all_data, area_name=area_name), code="""
+		console.log("callback triggered")
 		var data = source.data;
 		var values = data["values"];
 
-		var value = cb_obj.value;
+		var sliderValue = cb_obj.value;
 		var var_text = cb_obj.title;
 
-        var variable;
-		var value_idx;
-
-		socket.emit('slider_changed', {newValue: value, definition: var_text});
+		socket.emit('slider_changed', {newValue: sliderValue, definition: var_text});
+		// socket.emit('ready_for_model_update', {newValue: sliderValue, variable: variable, area: area_name});
 
         socket.on('data_updated', function(msg) {
-            value = msg.new_value;
-            variable = msg.variable;
-			value_idx = msg.index;
-
+            var value = msg.new_value;
+            var variable = msg.variable;
+			var value_idx = msg.index;
 			values[value_idx] = value;
 			data.values = values;
 			source.data = data;
 			source.change.emit();
-
 			window.onmouseup = function() {
-				socket.emit('model_update', {newValue: value, variable: variable, area: area_name});
+				console.log(msg.new_value)
+				console.log("old", values[value_idx])
+				socket.emit('ready_for_model_update', {newValue: value, variable: variable, area: area_name});
 			}
         });
+		
 	""")
 
 	for slider in all_sliders:

@@ -8,6 +8,7 @@ stats_ams_meta = pd.read_csv("app/data/ams_stats_infovis_metadata.csv", sep=";")
 
 model_data = stats_ams.copy()
 model_vars = stats_ams.drop(['area_name', 'area_code', 'WOPPONB_P'], axis=1)
+
 model_vars = model_vars.columns.tolist()
 model_vars_text = ['Living space of 0-40 m2', 'Living space of 40-60 m2', 'Living space of 60-80 m2', 
 'Living space of 80-100 m2', 'Living space of > 100 m2', 'Low rent (< 711 euro)', 'Middle high rent (711 - 971 euro)', 
