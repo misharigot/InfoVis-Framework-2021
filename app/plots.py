@@ -76,6 +76,19 @@ y_extra_info=data.label_extra_ordered, div_name="myplot"):
 	        hover_fill_alpha = 1.0, hover_fill_color = 'navy', source=all_data)
 	plot.title.text = "Relevant statistics about " + area_name
 	
+	all_sliders = create_sliders(plot_data, all_data, area_name)
+
+	layout = row(
+	    plot,
+	    column(*all_sliders),
+		width=800
+	)
+
+	plot_json = json_item(layout, div_name)
+
+	return plot_json
+
+def create_sliders(plot_data, all_data, area_name) -> List[Slider]:
 	part_rent_slider = Slider(start=0, end=100, value=plot_data.loc[:, 'WPARTHUUR_P'].iloc[0], step=1, title="Private rental")
 	corp_rent_slider = Slider(start=0, end=100, value=plot_data.loc[:, 'WCORHUUR_P'].iloc[0], step=1, title="Housing corporation rental")
 	high_rent_slider = Slider(start=0, end=100, value=plot_data.loc[:, 'WHUURHOOG_P'].iloc[0], step=1, title="High rent (> 971 euro)")
@@ -87,8 +100,10 @@ y_extra_info=data.label_extra_ordered, div_name="myplot"):
 	living_space_80100 = Slider(start=0, end=100, value=plot_data.loc[:, 'WOPP80100_P'].iloc[0], step=1, title="Living space of 80-100 m2")
 	living_space_100 = Slider(start=0, end=100, value=plot_data.loc[:, 'WOPP100PLUS_P'].iloc[0], step=1, title="Living space of > 100 m2")
 
-	all_sliders = [part_rent_slider, corp_rent_slider, high_rent_slider,middle_rent_slider, low_rent_slider, 
-	living_space_100, living_space_80100, living_space_6080, living_space_4060, living_space_040]
+	all_sliders = [
+		part_rent_slider, corp_rent_slider, high_rent_slider,middle_rent_slider, low_rent_slider, 
+		living_space_100, living_space_80100, living_space_6080, living_space_4060, living_space_040
+	]
 
 	callback = CustomJS(args=dict(source=all_data, area_name=area_name), code="""
 		console.log("callback triggered")
@@ -120,13 +135,4 @@ y_extra_info=data.label_extra_ordered, div_name="myplot"):
 
 	for slider in all_sliders:
 		slider.js_on_change('value', callback)
-
-	layout = row(
-	    plot,
-	    column(*all_sliders),
-		width=800
-	)
-
-	plot_json = json_item(layout, div_name)
-
-	return plot_json
+	return all_sliders
