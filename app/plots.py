@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 
 from bokeh.embed import json_item
 from bokeh.layouts import column, row, widgetbox
@@ -9,11 +9,18 @@ from . import data
 
 
 def get_probabilities_plot(probabilities: List[List[float]]):
-	probabilities = probabilities[0]
 	div_name = "probabilities-plot"
+	probabilities = probabilities[0]
 	area_names = data.model_data['area_name']
-	
-	source = ColumnDataSource({"area_names": area_names, "probabilities": probabilities })
+
+	def sort_data(area_names, probabilities) -> Tuple[List[str], List[float]]:
+		combined = list(zip(area_names, probabilities))
+		combined = sorted(combined, key=lambda k: k[1], reverse=True)
+		sorted_area_names = [x[0] for x in combined]
+		sorted_probabilities = [x[1] for x in combined]
+		return sorted_area_names, sorted_probabilities
+	area_names, probabilities = sort_data(area_names, probabilities)
+		
 	p = figure(
 		x_range=area_names, 
 		plot_height=500,
@@ -22,16 +29,15 @@ def get_probabilities_plot(probabilities: List[List[float]]):
 		title="Predicted probabilities per area"
 	)
 	p.vbar(
-		x='area_names',
-		top='probabilities', 
-		width=.8, source=source, legend_field="area_names",
+		x=area_names,
+		top=probabilities, 
+		width=.8, 
+		# source=source, 
 		line_color='white')
 
 	p.xgrid.grid_line_color = None
 	p.y_range.start = 0
 	p.y_range.end = max(probabilities)
-	p.legend.orientation = "vertical"
-	p.legend.location = "top_center"
 	p.xaxis.major_label_orientation = "vertical"
 
 	plot_json = json_item(p, div_name)
